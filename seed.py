@@ -1,13 +1,15 @@
- """Utility file to seed ratings database from MovieLens data in seed_data/"""
+"""Utility file to seed ratings database from MovieLens data in seed_data/"""
 
 from sqlalchemy import func
 from model import User
-# from model import Rating
+from model import Rating
 from model import Movie
 
 from model import connect_to_db, db
 from server import app
-import datetime from datetime
+from datetime import datetime
+
+import re
 
 
 def load_users():
@@ -37,16 +39,57 @@ def load_users():
 
 def load_movies():
     """Load movies from u.item into database."""
-    for row in open("seed data/u.item"):
-        row = row.rstrip()
-        movie_id, title, released_at, imdb_url = row.split("|")
 
-    released_at = datetime.strptime(released_at, '%d-%m-%Y')
-    print released_at
+    # pattern = "([[:space:]]\(\d\d\d\d\))"
+    
+    for row in open("seed_data/u.item"):
+        row = row.rstrip()
+        row_items = row.split("|")
+        
+        movie_id = row_items[0]
+        
+        # title = row_items[1][:-7] #Gets rid of the (YYYY) and extra space at the end of title
+        raw_title = row_items[1]
+        title = re.sub("(\s\(\d\d\d\d\))", '', raw_title)
+        print title
+        
+        raw_data = row_items[2]
+        if raw_data:
+            released_at = datetime.strptime(raw_data, '%d-%b-%Y').strftime('%m-%d-%Y')
+        else:
+            released_at = None
+        
+        imdb_url = row_items[4]
+        # print "length of URL: ", len(imdb_url)
+
+        movie = Movie(movie_id=movie_id,
+                        title=title,
+                        released_at=released_at,
+                        imdb_url=imdb_url)
+
+        db.session.add(movie)
+
+    db.session.commit()
 
 
 def load_ratings():
     """Load ratings from u.data into database."""
+
+    for row in open("seed_data/u.data"):
+        row = row.strip()
+        row_items = row.split('\t')
+
+        movie_id = row_items[0]
+        user_id = row_items[1]
+        score = row_items[2]
+
+        rating = Rating(movie_id=movie_id, user_id=user_id, score=score)
+
+        db.session.add(rating)
+
+    db.session.commit()
+
+
 
 
 def set_val_user_id():
