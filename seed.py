@@ -51,11 +51,13 @@ def load_movies():
         # title = row_items[1][:-7] #Gets rid of the (YYYY) and extra space at the end of title
         raw_title = row_items[1]
         title = re.sub("(\s\(\d\d\d\d\))", '', raw_title)
-        print title
+        title = title.decode("latin-1")
+        # print title
         
         raw_data = row_items[2]
         if raw_data:
-            released_at = datetime.strptime(raw_data, '%d-%b-%Y').strftime('%m-%d-%Y')
+            released_at = datetime.strptime(raw_data, '%d-%b-%Y')
+            # released_at = released_at.strftime('%m-%d-%Y')
         else:
             released_at = None
         
