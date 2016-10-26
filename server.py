@@ -49,12 +49,42 @@ def register_process():
     username = request.form.get('username')
     password = request.form.get('password')
 
-    all_emails = User.query.email
-    if username not in User.email:
+    search_user = db.session.query(User)
 
+    if search_user.filter_by(email=username).scalar() is None:
+
+        new_user = User(email=username, password=password)
+
+        db.session.add(new_user)
+
+        db.session.commit()
+
+        flash("Thank you for signing up! Please log in!")
+
+    elif search_user.filter_by(email=username, password=password).scalar() is not None:
+
+        login_user_id = db.session.query(User.user_id).filter_by(email=username, password=password).scalar()
+
+        session['user_id'] = login_user_id
+
+        flash("Logged in.")
+
+    else:
+
+        flash("Your password doesn't match our database!!!!!!")
 
     return redirect('/')
 
+
+@app.route('/logout', methods=['GET'])
+def logout_process():
+    """Processes logging out."""
+
+    del session['user_id']
+
+    flash("You have logged out!")
+
+    return redirect('/')
 
 
 
