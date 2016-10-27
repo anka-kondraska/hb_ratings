@@ -4,6 +4,7 @@ from jinja2 import StrictUndefined
 
 from flask import (Flask, jsonify, render_template, redirect, request, flash, session)
 from flask_debugtoolbar import DebugToolbarExtension
+from sqlalchemy.orm import joinedload
 
 from model import connect_to_db, db, User, Rating, Movie
 
@@ -35,6 +36,22 @@ def user_list():
     return render_template("user_list.html", users=users)
 
 
+@app.route('/users/<user_id>')
+def user_info(user_id):
+    """Show information about the logged in user."""
+
+    user_info = User.query.filter_by(user_id=user_id).options(joinedload('ratings')).first()
+
+    ratings_list = user_info.ratings
+
+    # ratings_list = db.session.query(Rating.rating_id, Rating.score, Rating.movie_id, Movie.title, Rating.user_id).join(Movie).filter(Rating.movie_id == Movie.movie_id).filter(Rating.user_id == user_id).all()
+
+    # ratings_list = movie_list.ratings
+
+    return render_template("user_info.html", user_info=user_info,
+                                            ratings_list=ratings_list)
+
+
 @app.route('/register', methods=['GET'])
 def register_form():
     """Show register_form."""
@@ -48,20 +65,46 @@ def register_process():
 
     username = request.form.get('username')
     password = request.form.get('password')
+    age = request.form.get('age')
+    zipcode = request.form.get('zipcode')
+
 
     search_user = db.session.query(User)
 
     if search_user.filter_by(email=username).scalar() is None:
 
-        new_user = User(email=username, password=password)
+        new_user = User(email=username, password=password, age=age, zipcode=zipcode)
 
         db.session.add(new_user)
 
         db.session.commit()
 
-        flash("Thank you for signing up! Please log in!")
+        login_user_id = db.session.query(User.user_id).filter_by(email=username, password=password).scalar()
 
-    elif search_user.filter_by(email=username, password=password).scalar() is not None:
+        session['user_id'] = login_user_id
+
+        flash("Thank you for signing up! You are logged in.")
+
+    return redirect('/users')
+
+
+@app.route('/login', methods=['GET'])
+def login_form():
+    """Show login_form."""
+
+    return render_template("login_form.html")
+
+
+@app.route('/login', methods=['POST'])
+def login_process():
+    """Processes register_form."""
+
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    search_user = db.session.query(User)
+
+    if search_user.filter_by(email=username, password=password).scalar() is not None:
 
         login_user_id = db.session.query(User.user_id).filter_by(email=username, password=password).scalar()
 
@@ -71,7 +114,7 @@ def register_process():
 
     else:
 
-        flash("Your password doesn't match our database!!!!!!")
+        flash("Your password doesn't match our database!")
 
     return redirect('/')
 
