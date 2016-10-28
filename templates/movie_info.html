@@ -14,7 +14,7 @@
     {% if users_rating %}
       <h3>You rated {{ movie_info.title }} a score of {{ users_rating.score }}.</h3>
 
-      <p>Feel differently about this movie? Udate your rating!</p>
+      <p>Feel differently about this movie? Update your rating!</p>
       <form action='/update_rating' method='POST'>
         <label>Select a score:</label>
         <select name="update_score">
@@ -25,6 +25,7 @@
           <option value="5">5</option>
         </select>
         <input type="hidden" name="movie_id" value="{{ movie_info.movie_id }}">
+        <input type="hidden" name="rating_id" value="{{ users_rating.rating_id }}">
         <input type="submit">
       </form>
 

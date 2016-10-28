@@ -5,6 +5,12 @@
 </head>
 <body>
   Ratings
+  <a href="/">Homepage</a>
+  {% if "login_user_id" in session %}
+  {% else %}
+  <a href="/register">Sign Up!</a>
+  <a href="/login">Log In!</a>
+  {% endif %}
   <hr>
 
   <ul>

@@ -79,8 +79,8 @@ def movie_info(movie_id):
         for rating in ratings_list:
             if rating.user.user_id == login_user_id:
                 users_rating.append(rating)
+                users_rating = users_rating[0]
 
-        users_rating = users_rating[0]
     else:
         users_rating = None
 
@@ -105,6 +105,31 @@ def new_rating():
     db.session.commit()
 
     flash("Thank you for rating this movie!")
+
+    return redirect(url_for('movie_info', movie_id=movie_id))
+
+
+@app.route('/update_rating', methods=['POST'])
+def update_rating():
+    """Processes update rating form on movie description page."""
+
+    update_score = request.form.get('update_score') #This will grab the value from dropdown form
+    movie_id = request.form.get('movie_id')
+    rating_id = request.form.get('rating_id')
+
+    login_user_id = session['login_user_id']
+
+    rating = Rating.query.filter_by(rating_id = rating_id).first()
+
+    rating.score = update_score
+
+    # update_rating = Rating(movie_id=movie_id, user_id=login_user_id, score=update_score)
+
+    # db.session.add(update_rating)
+
+    db.session.commit()
+
+    flash("Thank you for updating your rating for this movie!")
 
     return redirect(url_for('movie_info', movie_id=movie_id))
 
