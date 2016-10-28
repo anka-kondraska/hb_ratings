@@ -2,7 +2,7 @@
 
 from jinja2 import StrictUndefined
 
-from flask import (Flask, jsonify, render_template, redirect, request, flash, session)
+from flask import (Flask, jsonify, render_template, redirect, request, flash, session, url_for)
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.orm import joinedload
 
@@ -38,7 +38,7 @@ def user_list():
 
 @app.route('/users/<user_id>')
 def user_info(user_id):
-    """Show information about the logged in user."""
+    """Show information about user."""
 
     user_info = User.query.filter_by(user_id=user_id).options(joinedload('ratings')).first()
 
@@ -50,6 +50,63 @@ def user_info(user_id):
 
     return render_template("user_info.html", user_info=user_info,
                                             ratings_list=ratings_list)
+
+@app.route('/movies')
+def movie_list():
+    """Show list of movies."""
+
+    movies = Movie.query.order_by(Movie.title).all()
+    return render_template("movie_list.html", movies=movies)
+
+
+@app.route('/movies/<movie_id>')
+def movie_info(movie_id):
+    """Show information about movie."""
+    # if 'login_user_id' in session.keys():
+    #     login_user_id = session['login_user_id']
+    #     print "session", session.keys()
+    #     print login_user_id
+
+    movie_info = Movie.query.filter_by(movie_id=movie_id).options(joinedload('ratings')).first()
+
+    ratings_list = movie_info.ratings
+
+    if 'login_user_id' in session.keys():
+        login_user_id = session['login_user_id']
+
+        users_rating = []
+
+        for rating in ratings_list:
+            if rating.user.user_id == login_user_id:
+                users_rating.append(rating)
+
+        users_rating = users_rating[0]
+    else:
+        users_rating = None
+
+    return render_template("movie_info.html", movie_info=movie_info,
+                                            ratings_list=ratings_list,
+                                            users_rating=users_rating)
+
+
+@app.route('/new_rating', methods=['POST'])
+def new_rating():
+    """Processes new rating form on movie description page."""
+
+    new_score = request.form.get('new_score') #This will grab the value from dropdown form
+    movie_id = request.form.get('movie_id')
+
+    login_user_id = session['login_user_id']
+
+    new_rating = Rating(movie_id=movie_id, user_id=login_user_id, score=new_score)
+
+    db.session.add(new_rating)
+
+    db.session.commit()
+
+    flash("Thank you for rating this movie!")
+
+    return redirect(url_for('movie_info', movie_id=movie_id))
 
 
 @app.route('/register', methods=['GET'])
@@ -81,11 +138,11 @@ def register_process():
 
         login_user_id = db.session.query(User.user_id).filter_by(email=username, password=password).scalar()
 
-        session['user_id'] = login_user_id
+        session['login_user_id'] = login_user_id
 
         flash("Thank you for signing up! You are logged in.")
 
-    return redirect('/users')
+    return redirect(url_for('user_info', user_id=login_user_id))
 
 
 @app.route('/login', methods=['GET'])
@@ -108,22 +165,24 @@ def login_process():
 
         login_user_id = db.session.query(User.user_id).filter_by(email=username, password=password).scalar()
 
-        session['user_id'] = login_user_id
+        session['login_user_id'] = login_user_id
 
         flash("Logged in.")
+
+        return redirect(url_for('user_info', user_id=login_user_id))
 
     else:
 
         flash("Your password doesn't match our database!")
-
-    return redirect('/')
+        
+        return redirect('/')
 
 
 @app.route('/logout', methods=['GET'])
 def logout_process():
     """Processes logging out."""
 
-    del session['user_id']
+    del session['login_user_id']
 
     flash("You have logged out!")
 

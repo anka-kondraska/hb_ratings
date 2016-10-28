@@ -81,8 +81,8 @@ def load_ratings():
         row = row.strip()
         row_items = row.split('\t')
 
-        movie_id = row_items[0]
-        user_id = row_items[1]
+        user_id = row_items[0]
+        movie_id = row_items[1]
         score = row_items[2]
 
         rating = Rating(movie_id=movie_id, user_id=user_id, score=score)

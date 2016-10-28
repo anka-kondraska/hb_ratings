@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+
+  <h2>Movie Info</h2>
+
+  <ul>
+    <li>Movie ID: {{ movie_info.movie_id }}</li>
+    <li>Title: {{ movie_info.title }}</li>
+    <li>Release Date: {{ movie_info.released_at }}</li>
+    <li>IMDB URL: {{ movie_info.imdb_url }}</li>
+  </ul>
+
+  {% if "login_user_id" in session %}
+    {% if users_rating %}
+      <h3>You rated {{ movie_info.title }} a score of {{ users_rating.score }}.</h3>
+
+      <p>Feel differently about this movie? Udate your rating!</p>
+      <form action='/update_rating' method='POST'>
+        <label>Select a score:</label>
+        <select name="update_score">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        <input type="hidden" name="movie_id" value="{{ movie_info.movie_id }}">
+        <input type="submit">
+      </form>
+
+      {% else %}
+      <h3>You have not rated {{ movie_info.title }}. Please rate below!</h3>
+      <form action='/new_rating' method='POST'>
+        <label>Select a score:</label>
+        <select name="new_score">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        <input type="hidden" name="movie_id" value="{{ movie_info.movie_id }}">
+        <input type="submit">
+      </form>
+    {% endif %}
+
+  {% else %}
+    <p><a href='/login'>Log in to review!</a></p>
+  {% endif %}
+  
+
+  {% if ratings_list %}
+    <ul>
+    {% for rating in ratings_list %}
+    
+      <li>User {{ rating.user.user_id }} rated this movie: {{ rating.score }}</li>
+    
+    {% endfor %}
+    </ul>
+  {% endif %}
+
+{% endblock %}
